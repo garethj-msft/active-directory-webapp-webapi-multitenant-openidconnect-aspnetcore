@@ -73,5 +73,6 @@ namespace TodoListWebApp.Models
         public string telephoneNumber { get; set; }
         public string usageLocation { get; set; }
         public string userPrincipalName { get; set; }
+        public string token { get; set; }
     }
 }

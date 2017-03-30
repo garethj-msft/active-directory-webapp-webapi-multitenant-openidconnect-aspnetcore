@@ -26,12 +26,13 @@ namespace TodoListWebApp.Services
     // An EF based implementation of the ADAL token cache
     public class DbTokenCache : TokenCache, IAzureAdTokenService
     {
-        private TodoListWebAppContext _db;
+        // private TodoListWebAppContext _db;
         private string _userId;
         private AzureADConfig _aadConfig;
         private PerWebUserCache _cache;
         private AuthenticationContext _authContext;
         private readonly ClientCredential _appCredentials;
+        private static List<PerWebUserCache> _memCache = new List<PerWebUserCache>();
 
         public DbTokenCache(TodoListWebAppContext db, IHttpContextAccessor httpContextAccessor, IOptions<AzureADConfig> aadConfig)
         {
@@ -39,7 +40,7 @@ namespace TodoListWebApp.Services
             this.AfterAccess = AfterAccessNotification;
             this.BeforeWrite = BeforeWriteNotification;
 
-            _db = db;
+          
             _aadConfig = aadConfig.Value;
             _userId = httpContextAccessor.HttpContext.User.FindFirst(AzureADConstants.ObjectIdClaimType).Value;
             string tenantId = httpContextAccessor.HttpContext.User.FindFirst(AzureADConstants.TenantIdClaimType).Value;
@@ -63,9 +64,10 @@ namespace TodoListWebApp.Services
         public override void Clear()
         {
             base.Clear();
-            foreach (var cacheEntry in _db.PerUserCacheList)
-                _db.PerUserCacheList.Remove(cacheEntry);
-            _db.SaveChanges();
+            _memCache.Clear();
+            //foreach (var cacheEntry in _db.PerUserCacheList)
+            //    _db.PerUserCacheList.Remove(cacheEntry);
+            //_db.SaveChanges();
         }
 
         // Notification raised before ADAL accesses the cache.
@@ -75,11 +77,12 @@ namespace TodoListWebApp.Services
             if (_cache == null)
             {
                 // first time access
-                _cache = _db.PerUserCacheList.FirstOrDefault(c => c.webUserUniqueId == _userId);
+                _cache = _memCache.FirstOrDefault(c => c.webUserUniqueId == _userId);
+                this.HasStateChanged = true;  // Fake DB
             }
             else
             {   // retrieve last write from the db
-                var status = from e in _db.PerUserCacheList
+                var status = from e in _memCache
                              where (e.webUserUniqueId == _userId)
                              select new
                              {
@@ -89,7 +92,7 @@ namespace TodoListWebApp.Services
                 if (status.First().LastWrite > _cache.LastWrite)
                 //// read from from storage, update in-memory copy
                 {
-                    _cache = _db.PerUserCacheList.FirstOrDefault(c => c.webUserUniqueId == _userId);
+                    _cache = _memCache.FirstOrDefault(c => c.webUserUniqueId == _userId);
                 }
             }
             this.Deserialize((_cache == null) ? null : _cache.cacheBits);
@@ -108,9 +111,14 @@ namespace TodoListWebApp.Services
                     cacheBits = this.Serialize(),
                     LastWrite = DateTime.Now
                 };
-                //// update the db and the lastwrite                
-                _db.Entry(_cache).State = _cache.EntryId == 0 ? EntityState.Added : EntityState.Modified;
-                _db.SaveChanges();
+                if (_memCache.FindIndex( c =>  c.webUserUniqueId==_cache.webUserUniqueId) == -1 )
+                {
+                    _memCache.Add(_cache);
+                }
+
+                // update the db and the lastwrite                
+                //_db.Entry(_cache).State = _cache.EntryId == 0 ? EntityState.Added : EntityState.Modified;
+                //_db.SaveChanges();
                 this.HasStateChanged = false;
             }
         }

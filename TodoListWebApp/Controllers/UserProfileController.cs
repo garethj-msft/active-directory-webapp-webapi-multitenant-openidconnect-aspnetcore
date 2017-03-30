@@ -52,7 +52,9 @@ namespace TodoListWebApp.Controllers
                 }
 
                 string responseString = await response.Content.ReadAsStringAsync();
-                return View(JsonConvert.DeserializeObject<AADUserProfile>(responseString));
+                var model = JsonConvert.DeserializeObject<AADUserProfile>(responseString);
+                model.token = token;
+                return View(model);
             }
             catch (AdalException ex)
             {

@@ -23,6 +23,18 @@
                 <tr>
                     <td>
                         <div class="display-label">
+                            @Html.DisplayNameFor(model => model.token)
+                        </div>
+                    </td>
+                    <td>
+                        <div class="display-field" style="width:200px;user-select:all">
+                            Bearer @Html.DisplayFor(model => model.token)
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="display-label">
                             @Html.DisplayNameFor(model => model.accountEnabled)
                         </div>
                     </td>

@@ -64,41 +64,41 @@ namespace TodoListWebApp
             string upn = context.Ticket.Principal.FindFirst(ClaimTypes.Upn).Value;
 
             // Look up existing sign up records from the database
-            Tenant tenant = db.Tenants.FirstOrDefault(a => a.IssValue.Equals(issuer));
-            AADUserRecord user = db.Users.FirstOrDefault(b => b.ObjectID.Equals(objectID));
+           // Tenant tenant = db.Tenants.FirstOrDefault(a => a.IssValue.Equals(issuer));
+           //  AADUserRecord user = db.Users.FirstOrDefault(b => b.ObjectID.Equals(objectID));
 
             // If the user is signing up, add the user or tenant to the database record of sign ups.
-            string adminConsentSignUp = null;
-            if (context.Properties.Items.TryGetValue(Constants.AdminConsentKey, out adminConsentSignUp))
-            {
-                if (adminConsentSignUp == Constants.True)
-                {
-                    if (tenant == null)
-                    {
-                        tenant = new Tenant { Created = DateTime.Now, IssValue = issuer, Name = context.Properties.Items[Constants.TenantNameKey], AdminConsented = true };
-                        db.Tenants.Add(tenant);
-                    }
-                    else
-                    {
-                        tenant.AdminConsented = true;
-                    }
-                }
-                else if (user == null)
-                {
-                    user = new AADUserRecord { UPN = upn, ObjectID = objectID };
-                    db.Users.Add(user);
-                }
+            //string adminConsentSignUp = null;
+            //if (context.Properties.Items.TryGetValue(Constants.AdminConsentKey, out adminConsentSignUp))
+            //{
+            //    if (adminConsentSignUp == Constants.True)
+            //    {
+            //        if (tenant == null)
+            //        {
+            //            tenant = new Tenant { Created = DateTime.Now, IssValue = issuer, Name = context.Properties.Items[Constants.TenantNameKey], AdminConsented = true };
+            //            db.Tenants.Add(tenant);
+            //        }
+            //        else
+            //        {
+            //            tenant.AdminConsented = true;
+            //        }
+            //    }
+            //    else if (user == null)
+            //    {
+            //        user = new AADUserRecord { UPN = upn, ObjectID = objectID };
+            //        db.Users.Add(user);
+            //    }
 
-                db.SaveChanges();
-            }
+            //    db.SaveChanges();
+            //}
 
             // Ensure that the caller is recorded in the db of users who went through the individual onboarding
             // or if the caller comes from an admin-consented, recorded issuer.
-            if ((tenant == null || !tenant.AdminConsented) && (user == null))
-            {
-                // If not, the caller was neither from a trusted issuer or a registered user - throw to block the authentication flow
-                throw new SecurityTokenValidationException("Did you forget to sign-up?");
-            }
+            //if ((tenant == null || !tenant.AdminConsented) && (user == null))
+            //{
+            //    // If not, the caller was neither from a trusted issuer or a registered user - throw to block the authentication flow
+            //    throw new SecurityTokenValidationException("Did you forget to sign-up?");
+            //}
 
             return Task.FromResult(0);
         }
